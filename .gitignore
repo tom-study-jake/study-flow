@@ -1,0 +1,27 @@
+# Maven 编译输出
+target/
+*.class
+*.jar
+*.war
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.settings/
+.project
+.classpath
+*.log
+
+# OS
+Thumbs.db
+.DS_Store
+
+# nginx 运行时日志
+nginx-windows/nginx-1.31.1/logs/*
+!nginx-windows/nginx-1.31.1/logs/.gitkeep
+
+# 旧单体项目（独立 git）
+StudyFlow/

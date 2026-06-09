@@ -1,0 +1,6 @@
+2026/06/08 16:48:26 [error] 31052#28544: *1 CreateFile() "D:/IDEAjava/StudyFlow/src/main/resources/static/favicon.ico" failed (2: The system cannot find the file specified), client: 127.0.0.1, server: localhost, request: "GET /favicon.ico HTTP/1.1", host: "localhost", referrer: "http://localhost/"
+2026/06/09 11:11:07 [emerg] 3724#26016: "server" directive is not allowed here in D:\IDEAjava\study-flow-parent\nginx-windows\nginx-1.31.1/conf/nginx.conf:7
+2026/06/09 11:12:37 [emerg] 24300#25532: "server" directive is not allowed here in D:\IDEAjava\study-flow-parent\nginx-windows\nginx-1.31.1/conf/nginx.conf:7
+2026/06/09 11:12:38 [emerg] 30124#28396: "server" directive is not allowed here in D:\IDEAjava\study-flow-parent\nginx-windows\nginx-1.31.1/conf/nginx.conf:7
+2026/06/09 11:12:39 [emerg] 37716#10488: "server" directive is not allowed here in D:\IDEAjava\study-flow-parent\nginx-windows\nginx-1.31.1/conf/nginx.conf:7
+2026/06/09 11:14:11 [emerg] 33568#6252: "server" directive is not allowed here in nginx-windows\nginx-1.31.1/conf/nginx.conf:7
