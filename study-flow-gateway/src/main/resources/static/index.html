@@ -332,6 +332,7 @@
         <div class="logo">📚 StudyFlow</div>
         <div class="nav-item active" onclick="switchTab('rooms')" id="tab-rooms">自习室</div>
         <div class="nav-item" onclick="switchTab('reservations')" id="tab-reservations">我的预约</div>
+        <div class="nav-item" onclick="switchTab('profile')" id="tab-profile">个人中心</div>
         <div class="nav-right">
             <span class="user-name" id="user-name-display"></span>
             <button class="logout-btn" onclick="logout()">退出</button>
@@ -399,8 +400,53 @@
             </div>
             <div id="reservation-list"></div>
         </div>
+
+        <!-- ===== 个人中心 ===== -->
+        <div id="page-profile" class="page">
+            <div class="page-title">个人中心</div>
+            <div class="profile-card">
+                <div class="profile-row">
+                    <span class="profile-label">昵称</span>
+                    <span class="profile-value" id="profile-nickname">-</span>
+                </div>
+                <div class="profile-row">
+                    <span class="profile-label">信用分</span>
+                    <span class="profile-value profile-credit" id="profile-credit">-</span>
+                </div>
+                <div class="profile-row">
+                    <span class="profile-label">爽约次数</span>
+                    <span class="profile-value profile-miss" id="profile-miss">-</span>
+                </div>
+                <div class="profile-row">
+                    <span class="profile-label">账户状态</span>
+                    <span class="profile-value" id="profile-status">-</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<style>
+    .profile-card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        max-width: 400px;
+        margin: 0 auto;
+    }
+    .profile-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .profile-row:last-child { border-bottom: none; }
+    .profile-label { color: #999; font-size: 15px; }
+    .profile-value { font-size: 16px; font-weight: 500; color: #333; }
+    .profile-credit { color: #fa8c16; }
+    .profile-miss { color: #ff4d4f; }
+</style>
 
 <script>
     // ===== 全局状态 =====
@@ -425,6 +471,7 @@
         document.getElementById('page-' + tab).classList.add('active');
         if (tab === 'rooms') loadRooms();
         if (tab === 'reservations') loadReservations();
+        if (tab === 'profile') loadProfile();
     }
 
     // ===== 初始化日期 =====
@@ -435,6 +482,7 @@
         if (TOKEN) {
             showPage('page-app');
             document.getElementById('user-name-display').textContent = USER.nickname || '用户';
+            loadCredit();
             switchTab('rooms');
         }
     });
@@ -468,6 +516,7 @@
             localStorage.setItem('token', TOKEN);
             localStorage.setItem('user', JSON.stringify(USER));
             document.getElementById('user-name-display').textContent = USER.nickname;
+            loadCredit();
             showPage('page-app');
             switchTab('rooms');
         } else {
@@ -499,6 +548,30 @@
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         showPage('page-login');
+    }
+
+    // ===== 加载信用分（导航栏显示） =====
+    async function loadCredit() {
+        const res = await apiCall('GET', '/api/users/credit');
+        if (res.success && res.data) {
+            document.getElementById('profile-nickname').textContent = USER.nickname || '-';
+        }
+    }
+
+    // ===== 加载个人中心 =====
+    async function loadProfile() {
+        document.getElementById('profile-nickname').textContent = USER.nickname || '-';
+        const res = await apiCall('GET', '/api/users/credit');
+        if (res.success && res.data) {
+            document.getElementById('profile-credit').textContent = res.data.creditScore + ' 分';
+            document.getElementById('profile-miss').textContent = res.data.missCount + ' 次';
+            document.getElementById('profile-status').textContent =
+                res.data.isBanned ? '❌ 已封禁' : '✅ 正常';
+        } else {
+            document.getElementById('profile-credit').textContent = '暂无数据';
+            document.getElementById('profile-miss').textContent = '0 次';
+            document.getElementById('profile-status').textContent = '✅ 正常';
+        }
     }
 
     // ===== 自习室列表 =====

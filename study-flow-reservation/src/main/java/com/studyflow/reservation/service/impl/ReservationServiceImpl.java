@@ -1,6 +1,8 @@
 package com.studyflow.reservation.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.studyflow.reservation.config.RabbitMqConfig;
 import com.studyflow.dto.ReservationVO;
@@ -39,6 +41,9 @@ public class ReservationServiceImpl implements IReservationService {
 
     //创建预约
     @Override
+    @SentinelResource(value = "createReservation",
+            blockHandler = "createReservationBlockHandler",
+            fallback = "createReservationFallback")
     public Long createReservation(Long userId, Long seatId, Long periodId, LocalDate date) {
         String dateStr = date.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String occupyKey = String.format(SEAT_OCCUPY, seatId, dateStr, periodId);
@@ -146,21 +151,12 @@ public class ReservationServiceImpl implements IReservationService {
         }
         ReservationVO vo = BeanUtil.copyProperties(reservation, ReservationVO.class);
         switch (reservation.getStatus()) {
-            case 0:
-                vo.setStatusDesc("待签到");
-                break;
-            case 1:
-                vo.setStatusDesc("已签到");
-                break;
-            case 2:
-                vo.setStatusDesc("已完成");
-                break;
-            case 3:
-                vo.setStatusDesc("爽约");
-                break;
-            case 4:
-                vo.setStatusDesc("已取消");
-                break;
+            case 0 -> vo.setStatusDesc("待签到");
+            case 1 -> vo.setStatusDesc("已签到");
+            case 2 -> vo.setStatusDesc("已完成");
+            case 3 -> vo.setStatusDesc("爽约");
+            case 4 -> vo.setStatusDesc("已取消");
+            default -> vo.setStatusDesc("未知");
         }
         Seat seat = seatMapper.selectById(reservation.getSeatId());
         if (seat != null) {
@@ -171,5 +167,23 @@ public class ReservationServiceImpl implements IReservationService {
             vo.setRoomName(room.getName());
         }
         return vo;
+    }
+
+    // ==== Sentinel 限流降级方法 ====
+
+    /**
+     * 触发限流时调用（QPS 超限）
+     */
+    public Long createReservationBlockHandler(Long userId, Long seatId, Long periodId,
+                                               LocalDate date, BlockException ex) {
+        throw new RuntimeException("系统繁忙，请稍后再试");
+    }
+
+    /**
+     * 方法异常时调用（熔断降级）
+     */
+    public Long createReservationFallback(Long userId, Long seatId, Long periodId,
+                                           LocalDate date, Throwable ex) {
+        throw new RuntimeException("预约服务暂时不可用，请稍后重试");
     }
 }

@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.studyflow.dto.LoginVO;
 import com.studyflow.dto.RegisterReq;
 import com.studyflow.entity.User;
+import com.studyflow.entity.UserCredit;
+import com.studyflow.user.mapper.UserCreditMapper;
 import com.studyflow.user.mapper.UserMapper;
 import com.studyflow.user.service.IUserService;
 import com.studyflow.utils.JwtUtils;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Service;
 public class UserServiceImpl implements IUserService {
 
     private final UserMapper userMapper;
+    private final UserCreditMapper userCreditMapper;
 
     @Override
     public Long register(RegisterReq req) {
@@ -33,6 +36,16 @@ public class UserServiceImpl implements IUserService {
         user.setPassword(req.getPassword());
         user.setNickname(req.getNickname() != null ? req.getNickname() : "用户" + System.currentTimeMillis() % 10000);
         userMapper.insert(user);
+
+        // 创建默认信用记录
+        UserCredit credit = new UserCredit();
+        credit.setUserId(user.getId());
+        credit.setCreditScore(100);
+        credit.setMissCount(0);
+        credit.setMissStreak(0);
+        credit.setIsBanned(0);
+        userCreditMapper.insert(credit);
+
         return user.getId();
     }
 

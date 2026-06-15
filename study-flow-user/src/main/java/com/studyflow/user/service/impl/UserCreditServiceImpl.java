@@ -21,9 +21,18 @@ public class UserCreditServiceImpl implements IUserCreditService {
                         .eq(UserCredit::getUserId, userId)
         );
         if (userCredit == null) {
-            return null;
+            // 自动创建默认信用记录
+            userCredit = new UserCredit();
+            userCredit.setUserId(userId);
+            userCredit.setCreditScore(100);
+            userCredit.setMissCount(0);
+            userCredit.setMissStreak(0);
+            userCredit.setIsBanned(0);
+            userCreditMapper.insert(userCredit);
         }
-        return BeanUtil.copyProperties(userCredit, CreditVO.class);
+        CreditVO vo = BeanUtil.copyProperties(userCredit, CreditVO.class);
+        vo.setIsBanned(userCredit.getIsBanned() == 1);
+        return vo;
     }
 
     @Override
