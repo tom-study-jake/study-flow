@@ -1,6 +1,7 @@
 package com.studyflow.reservation.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.studyflow.dto.PeriodVO;
@@ -24,7 +25,7 @@ public class RoomServiceImpl implements IRoomService {
     @Override
     public List<RoomVO> getRoomList(Integer floor, String area) {
         List<StudyRoom> rooms = roomMapper.selectList(
-                Wrappers.<StudyRoom>lambdaQuery()
+                new LambdaQueryWrapper<StudyRoom>()
                         .eq(StudyRoom::getStatus, 0)
                         .eq(floor != null, StudyRoom::getFloor, floor)
                         .eq(StringUtils.isNotBlank(area), StudyRoom::getArea, area)
@@ -44,7 +45,7 @@ public class RoomServiceImpl implements IRoomService {
     @Override
     public List<PeriodVO> getRoomPeriods(Long id) {
         List<TimePeriod> periods = timePeriodMapper.selectList(
-                Wrappers.<TimePeriod>lambdaQuery()
+                new LambdaQueryWrapper<TimePeriod>()
                         .eq(TimePeriod::getRoomId, id)
                         .eq(TimePeriod::getStatus, 0)
                         .orderByAsc(TimePeriod::getSlotIndex)

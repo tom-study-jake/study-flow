@@ -1,0 +1,59 @@
+server:
+  port: 88
+
+spring:
+  application:
+    name: study-flow-gateway
+
+  cloud:
+    compatibility-verifier:
+      enabled: false
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+
+    gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
+
+      routes:
+        - id: user-auth
+          uri: lb://study-flow-user
+          predicates:
+            - Path=/api/auth/**
+
+        - id: user-credit
+          uri: lb://study-flow-user
+          predicates:
+            - Path=/api/users/**
+
+        - id: res-rooms
+          uri: lb://study-flow-reservation
+          predicates:
+            - Path=/api/rooms/**
+
+        - id: res-seats
+          uri: lb://study-flow-reservation
+          predicates:
+            - Path=/api/seats/**
+
+        - id: res-reservations
+          uri: lb://study-flow-reservation
+          predicates:
+            - Path=/api/reservations/**
+
+        - id: res-checkin
+          uri: lb://study-flow-reservation
+          predicates:
+            - Path=/api/check-In,/api/check-Out
+
+        - id: res-ws
+          uri: lb:ws://study-flow-reservation
+          predicates:
+            - Path=/api/ws/**

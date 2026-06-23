@@ -3,7 +3,7 @@ package com.studyflow.dto;
 import lombok.Data;
 
 import java.time.LocalTime;
-
+//时间段
 @Data
 public class PeriodVO {
     private Long id;

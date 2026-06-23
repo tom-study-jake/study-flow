@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-
+//签到记录
 @Data
 @TableName("tb_check_in")
 public class CheckIn {

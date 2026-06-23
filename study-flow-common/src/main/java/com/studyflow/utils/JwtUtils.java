@@ -16,8 +16,8 @@ import java.util.Date;
  */
 public class JwtUtils {
 
-    // 密钥（至少32位，实际项目应放在配置文件中）
-    private static final String SECRET = "StudyFlow2026SecretKeyForJwtToken!@#$%^";
+    // 密钥 - 生产环境应从配置文件或环境变量读取
+    private static final String SECRET = System.getenv().getOrDefault("JWT_SECRET", "StudyFlow2026SecretKeyForJwtToken!@#$%^");
 
     // 过期时间：7天（毫秒）
     private static final long EXPIRATION = 7 * 24 * 60 * 60 * 1000L;

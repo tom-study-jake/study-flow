@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.time.LocalTime;
-
+//时段
 @Data
 @TableName("tb_time_period")
 public class TimePeriod {

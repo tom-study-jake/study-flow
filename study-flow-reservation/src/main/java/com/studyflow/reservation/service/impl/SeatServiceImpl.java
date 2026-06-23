@@ -1,6 +1,7 @@
 package com.studyflow.reservation.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.studyflow.dto.AvailabilityVO;
 import com.studyflow.dto.SeatVO;
@@ -28,7 +29,7 @@ public class SeatServiceImpl implements ISeatService {
     public List<SeatVO> listSeats(Long roomId, LocalDate date, Long periodId) {
         String dateStr = date.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         List<Seat> seats = seatMapper.selectList(
-                Wrappers.<Seat>lambdaQuery()
+                new LambdaQueryWrapper<Seat>()
                         .eq(Seat::getRoomId, roomId)
                         .eq(Seat::getStatus, 0)
         );

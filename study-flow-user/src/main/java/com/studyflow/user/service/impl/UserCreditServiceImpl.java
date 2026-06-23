@@ -1,6 +1,7 @@
 package com.studyflow.user.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.studyflow.dto.CreditVO;
 import com.studyflow.entity.UserCredit;
@@ -17,7 +18,7 @@ public class UserCreditServiceImpl implements IUserCreditService {
     @Override
     public CreditVO getCreditByUserId(Long userId) {
         UserCredit userCredit = userCreditMapper.selectOne(
-                Wrappers.<UserCredit>lambdaQuery()
+                new LambdaQueryWrapper<UserCredit>()
                         .eq(UserCredit::getUserId, userId)
         );
         if (userCredit == null) {
@@ -38,7 +39,7 @@ public class UserCreditServiceImpl implements IUserCreditService {
     @Override
     public void checkInUpdate(Long userId) {
         UserCredit userCredit = userCreditMapper.selectOne(
-                Wrappers.<UserCredit>lambdaQuery()
+                new LambdaQueryWrapper<UserCredit>()
                         .eq(UserCredit::getUserId, userId)
         );
         if (userCredit == null) {
@@ -57,7 +58,7 @@ public class UserCreditServiceImpl implements IUserCreditService {
     @Override
     public int deductCredit(Long userId, int score) {
         UserCredit userCredit = userCreditMapper.selectOne(
-                Wrappers.<UserCredit>lambdaQuery()
+                new LambdaQueryWrapper<UserCredit>()
                         .eq(UserCredit::getUserId, userId)
         );
         if (userCredit == null) {

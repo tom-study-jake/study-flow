@@ -4,7 +4,7 @@ import lombok.Data;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-
+//预约详情返回
 @Data
 public class ReservationVO {
     private Long id;

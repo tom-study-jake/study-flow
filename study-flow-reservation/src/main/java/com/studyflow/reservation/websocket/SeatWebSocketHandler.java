@@ -18,8 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class SeatWebSocketHandler extends TextWebSocketHandler {
 
-    private static final ConcurrentHashMap<String, WebSocketSession> sessions =
-            new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {

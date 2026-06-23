@@ -6,7 +6,7 @@ import lombok.Data;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-
+//预约记录
 @TableName("tb_reservation")
 @Data
 public class Reservation {
@@ -20,7 +20,7 @@ public class Reservation {
 
     private Long roomId;
 
-    private Long periodId;
+    private Long periodId;//时间段
 
     private LocalDate reserveDate;//预约日期
 

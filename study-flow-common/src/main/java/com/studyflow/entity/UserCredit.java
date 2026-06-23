@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-
+//信用分
 @TableName("tb_user_credit")
 @Data
 public class UserCredit {

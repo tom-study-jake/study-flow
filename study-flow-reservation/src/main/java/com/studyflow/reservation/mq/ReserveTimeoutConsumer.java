@@ -44,14 +44,10 @@ public class ReserveTimeoutConsumer {
         // 删除 Redis 占座标记
         String dateStr = reservation.getReserveDate()
                 .format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        String occupyKey = String.format(
-                SEAT_OCCUPY,
-                reservation.getSeatId(), dateStr, reservation.getPeriodId());
+        String occupyKey = String.format(SEAT_OCCUPY, reservation.getSeatId(), dateStr, reservation.getPeriodId());
         redissonClient.getBucket(occupyKey).delete();
 
-        String userKey = String.format(
-                USER_RESERVE,
-                reservation.getUserId(), dateStr, reservation.getPeriodId());
+        String userKey = String.format(USER_RESERVE, reservation.getUserId(), dateStr, reservation.getPeriodId());
         redissonClient.getBucket(userKey).delete();
 
         // 通过 Feign 调用用户服务，扣信用分（爽约扣10分）

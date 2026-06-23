@@ -3,6 +3,7 @@ package com.studyflow.reservation.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.alibaba.csp.sentinel.annotation.SentinelResource;
 import com.alibaba.csp.sentinel.slots.block.BlockException;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.studyflow.reservation.config.RabbitMqConfig;
 import com.studyflow.dto.ReservationVO;
@@ -55,7 +56,6 @@ public class ReservationServiceImpl implements IReservationService {
         }
 
         String stockKey = String.format(SEAT_STOCK, seat.getRoomId(), dateStr, periodId);
-        //执行Lua脚本占座
         //先检查用户是否已占座
         RBucket<Object> userBucket = redissonClient.getBucket(userKey);
         if (userBucket.isExists()) {
@@ -98,11 +98,11 @@ public class ReservationServiceImpl implements IReservationService {
         reservation.setExpireTime(LocalDateTime.now().plusMinutes(15));  // 15分钟后过期
 
         reservationMapper.insert(reservation);
+
         String pushMsg = String.format(
                 "{\"seatId\":%d,\"status\":\"occupied\",\"userId\":%d}",
                 seatId, userId);
         seatWebSocketHandler.broadcastToRoom(seat.getRoomId(), pushMsg);
-
         return reservation.getId();
     }
 
@@ -133,7 +133,7 @@ public class ReservationServiceImpl implements IReservationService {
     @Override
     public List<ReservationVO> getUserReservations(Long userId, Integer status, LocalDate date) {
         List<Reservation> reservations = reservationMapper.selectList(
-                Wrappers.<Reservation>lambdaQuery()
+                new LambdaQueryWrapper<Reservation>()
                         .eq(Reservation::getUserId, userId)
                         .eq(status != null, Reservation::getStatus, status)
                         .eq(date != null, Reservation::getReserveDate, date)

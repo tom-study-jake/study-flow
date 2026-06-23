@@ -547,6 +547,7 @@
         USER = {};
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        if (ws) { ws.close(); ws = null; }
         showPage('page-login');
     }
 
@@ -610,6 +611,7 @@
         document.getElementById('period-view').style.display = 'none';
         document.getElementById('room-list-view').style.display = 'block';
         selectedRoom = null;
+        if (ws) { ws.close(); ws = null; }
     }
 
     async function loadPeriods() {
@@ -635,12 +637,14 @@
         document.getElementById('seat-title').textContent =
             `${selectedRoom.name} · 第${slotIndex}节 ${timeStr} · ${date}`;
         loadSeats(date, periodId);
+        connectWebSocket(selectedRoom.id, date, periodId);
     }
 
     function backToPeriods() {
         document.getElementById('seat-view').style.display = 'none';
         document.getElementById('period-view').style.display = 'block';
         selectedSeat = null;
+        if (ws) { ws.close(); ws = null; }
     }
 
     async function loadSeats(date, periodId) {
@@ -659,6 +663,7 @@
                     </div>
                 `;
             }).join('');
+            connectWebSocket(selectedRoom.id, date, periodId);
         }
     }
 
@@ -715,10 +720,11 @@
                 };
                 const s = statusMap[r.status] || { text: '未知', cls: '' };
                 const canCheckIn = r.status === 0;
+                const canCheckOut = r.status === 1;
                 const canCancel = r.status === 0;
                 return `
                     <div class="reservation-card">
-                        <div class="info">
+                        <div class="info" style="cursor:pointer;" onclick="showReservationDetail(${r.id})">
                             <div class="title">座位 ${r.seatNo || '未知'} · 第${r.periodId}节</div>
                             <div class="detail">
                                 <span>📅 ${r.reserveDate}</span>
@@ -728,6 +734,7 @@
                         <span class="status-badge ${s.cls}">${s.text}</span>
                         <div class="actions">
                             ${canCheckIn ? `<button class="btn btn-small btn-success" onclick="doCheckIn(${r.id})">签到</button>` : ''}
+                            ${canCheckOut ? `<button class="btn btn-small btn-primary" onclick="doCheckOut(${r.id})">签退</button>` : ''}
                             ${canCancel ? `<button class="btn btn-small btn-danger" onclick="doCancel(${r.id})">取消</button>` : ''}
                         </div>
                     </div>
@@ -756,6 +763,74 @@
         } else {
             alert('❌ ' + res.message);
         }
+    }
+
+    // ===== 签退 =====
+    async function doCheckOut(reservationId) {
+        if (!confirm('确认签退？')) return;
+        const res = await apiCall('POST', '/api/check-Out', { reservationId });
+        if (res.success) {
+            alert('✅ 签退成功，感谢使用！');
+            loadReservations();
+        } else {
+            alert('❌ ' + res.message);
+        }
+    }
+
+    // ===== 预约详情弹窗 =====
+    async function showReservationDetail(reservationId) {
+        const res = await apiCall('GET', '/api/reservations/' + reservationId);
+        if (!res.success || !res.data) {
+            alert('获取详情失败');
+            return;
+        }
+        const r = res.data;
+        const statusMap = {
+            0: '待签到', 1: '已签到', 2: '已完成', 3: '爽约', 4: '已取消'
+        };
+        const html = `
+            <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:center;justify-content:center;" onclick="this.remove()">
+                <div style="background:#fff;border-radius:12px;padding:30px;max-width:400px;width:90%;" onclick="event.stopPropagation()">
+                    <h3 style="margin-bottom:20px;">预约详情</h3>
+                    <div style="line-height:2.2;font-size:15px;">
+                        <div><span style="color:#999;">预约ID：</span>${r.id}</div>
+                        <div><span style="color:#999;">座位：</span>${r.seatNo || '未知'}</div>
+                        <div><span style="color:#999;">自习室：</span>${r.roomName || '未知'}</div>
+                        <div><span style="color:#999;">日期：</span>${r.reserveDate}</div>
+                        <div><span style="color:#999;">时段：</span>第${r.periodId}节</div>
+                        <div><span style="color:#999;">状态：</span>${statusMap[r.status] || '未知'}</div>
+                        <div><span style="color:#999;">创建时间：</span>${r.createTime || '-'}</div>
+                        <div><span style="color:#999;">签到时间：</span>${r.checkInTime || '-'}</div>
+                        <div><span style="color:#999;">过期时间：</span>${r.expireTime || '-'}</div>
+                        ${r.statusDesc ? `<div><span style="color:#999;">状态说明：</span>${r.statusDesc}</div>` : ''}
+                    </div>
+                    <button class="btn btn-outline" style="margin-top:20px;" onclick="this.closest('div[style*=fixed]').remove()">关闭</button>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', html);
+    }
+
+    // ===== WebSocket 实时座位状态 =====
+    let ws = null;
+    function connectWebSocket(roomId, date, periodId) {
+        if (ws) { ws.close(); ws = null; }
+        const wsUrl = `ws://${location.host}/api/ws/seats/${roomId}?date=${date}&periodId=${periodId}`;
+        ws = new WebSocket(wsUrl);
+        ws.onmessage = function(e) {
+            try {
+                const data = JSON.parse(e.data);
+                if (data.seatId && data.status === 'occupied') {
+                    const seatEl = document.querySelector(`.seat-item[onclick*="selectSeat(${data.seatId}"]`);
+                    if (seatEl) {
+                        seatEl.className = 'seat-item occupied';
+                        seatEl.setAttribute('onclick', '');
+                        seatEl.title = '座位已被占';
+                    }
+                }
+            } catch(err) {}
+        };
+        ws.onclose = function() { ws = null; };
     }
 
     // 回车登录

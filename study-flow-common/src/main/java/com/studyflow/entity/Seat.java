@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-
+// 座位
 @Data
 @TableName("tb_seat")
 public class Seat {

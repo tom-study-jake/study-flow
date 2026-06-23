@@ -1,5 +1,7 @@
 package com.studyflow.user.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.studyflow.dto.LoginVO;
 import com.studyflow.dto.RegisterReq;
@@ -23,14 +25,14 @@ public class UserServiceImpl implements IUserService {
     public Long register(RegisterReq req) {
         // 检查手机号是否已注册
         User exist = userMapper.selectOne(
-                Wrappers.<User>lambdaQuery()
+                new LambdaQueryWrapper<User>()
                         .eq(User::getPhone, req.getPhone())
         );
         if (exist != null) {
             throw new RuntimeException("该手机号已注册");
         }
 
-        // 保存用户（直接存原文密码，以后再加加密）
+        // 保存用户
         User user = new User();
         user.setPhone(req.getPhone());
         user.setPassword(req.getPassword());
@@ -53,7 +55,7 @@ public class UserServiceImpl implements IUserService {
     public LoginVO login(String phone, String password) {
         // 查用户
         User user = userMapper.selectOne(
-                Wrappers.<User>lambdaQuery()
+                new LambdaQueryWrapper<User>()
                         .eq(User::getPhone, phone)
         );
         if (user == null) {
