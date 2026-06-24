@@ -18,6 +18,7 @@ import com.studyflow.reservation.websocket.SeatWebSocketHandler;
 import com.studyflow.utils.RedisConstants;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RBucket;
+import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
@@ -71,22 +72,28 @@ public class ReservationServiceImpl implements IReservationService {
         //记录用户已占座
         userBucket.set(String.valueOf(userId));
         userBucket.expire(Duration.ofSeconds(RESERVE_TTL));
-        //扣库存
-        RBucket<Object> stockBucket = redissonClient.getBucket(stockKey);
-        String stockVal = (String) stockBucket.get();
-        if (stockVal == null) {
-            //库存未设置，默认10
-            stockBucket.set("10");
-            stockVal = "10";
+        //扣库存（分布式锁保证原子性）
+        RLock stockLock = redissonClient.getLock("stockLock:" + stockKey);
+        try {
+            stockLock.lock();
+            RBucket<Object> stockBucket = redissonClient.getBucket(stockKey);
+            String stockVal = (String) stockBucket.get();
+            if (stockVal == null) {
+                stockBucket.set("10");
+                stockVal = "10";
+            }
+            int stock = Integer.parseInt(stockVal);
+            if (stock <= 0) {
+                occupyBucket.delete();
+                userBucket.delete();
+                throw new RuntimeException("这个位置的剩余座位数不够");
+            }
+            stockBucket.set(String.valueOf(stock - 1));
+        } finally {
+            if (stockLock.isHeldByCurrentThread()) {
+                stockLock.unlock();
+            }
         }
-        int stock = Integer.parseInt(stockVal);
-        if (stock <= 0) {
-            //回滚：删占座标记
-            occupyBucket.delete();
-            userBucket.delete();
-            throw new RuntimeException("这个位置的剩余座位数不够");
-        }
-        stockBucket.set(String.valueOf(stock - 1));
         //记录
         Reservation reservation = new Reservation();
         reservation.setUserId(userId);

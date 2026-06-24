@@ -1,5 +1,6 @@
 package com.studyflow.reservation.mq;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.studyflow.reservation.config.RabbitMqConfig;
 import com.studyflow.entity.Reservation;
 import com.studyflow.reservation.client.UserClient;
@@ -9,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.redisson.api.RedissonClient;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.format.DateTimeFormatter;
 
@@ -24,22 +24,22 @@ public class ReserveTimeoutConsumer {
     private final UserClient userClient;
 
     @RabbitListener(queues = RabbitMqConfig.QUEUE_DLX)
-    @Transactional
     public void handleTimeout(String message) {
         Long reservationId = Long.valueOf(message);
         System.out.println("收到超时消息，预约ID：" + reservationId);
 
+        // 乐观锁：CAS 更新状态，只有一个消费者能成功
+        int rows = reservationMapper.update(null,
+                Wrappers.<Reservation>lambdaUpdate()
+                        .eq(Reservation::getId, reservationId)
+                        .eq(Reservation::getStatus, 0)
+                        .set(Reservation::getStatus, 3));
+        if (rows == 0) {
+            System.out.println("预约 " + reservationId + " 状态已变更，跳过");
+            return;
+        }
+
         Reservation reservation = reservationMapper.selectById(reservationId);
-        if (reservation == null) {
-            System.out.println("预约不存在");
-            return;
-        }
-        if (reservation.getStatus() != 0) {
-            System.out.println("预约状态已变更（status=" + reservation.getStatus() + "），跳过");
-            return;
-        }
-        reservation.setStatus(3);
-        reservationMapper.updateById(reservation);
 
         // 删除 Redis 占座标记
         String dateStr = reservation.getReserveDate()
