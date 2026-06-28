@@ -110,6 +110,11 @@ public class ReservationServiceImpl implements IReservationService {
                 "{\"seatId\":%d,\"status\":\"occupied\",\"userId\":%d}",
                 seatId, userId);
         seatWebSocketHandler.broadcastToRoom(seat.getRoomId(), pushMsg);
+        // 在 createReservation() 末尾加上
+        rabbitTemplate.convertAndSend(
+                RabbitMqConfig.EXCHANGE_RESERVE,
+                RabbitMqConfig.RK_TIMEOUT,
+                reservation.getId().toString());
         return reservation.getId();
     }
 
